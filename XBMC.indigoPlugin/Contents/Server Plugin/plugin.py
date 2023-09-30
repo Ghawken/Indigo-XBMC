@@ -9,18 +9,16 @@ import indigo
 import math
 import decimal
 import datetime
-import simplejson as json
+import json
 import requests
 from requests.auth import HTTPBasicAuth
 from xml.etree import ElementTree as ET
-from ghpu import GitHubPluginUpdater
 
 class Plugin(indigo.PluginBase):
 
     def __init__(self, pluginId, pluginDisplayName, pluginVersion, pluginPrefs):
         indigo.PluginBase.__init__(self, pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
-        self.updater = GitHubPluginUpdater(self) #'tenallero', 'Indigo-XBMC', self)
-        
+
         # Port
         self.listenPortDef = 8189
         self.listenPort    = 0
@@ -85,7 +83,6 @@ class Plugin(indigo.PluginBase):
         s.close()
 
         self.debugLog("Local IP address: " + self.localAddress)
-        self.updater.checkForUpdate()
 
     def shutdown(self):
         self.debugLog(u"shutdown called")
@@ -112,7 +109,7 @@ class Plugin(indigo.PluginBase):
                 errorMsgDict = indigo.Dict()
                 errorMsgDict[u'port'] = u"This needs to be a valid TCP port."
                 return (False, valuesDict, errorMsgDict)
-        except Exception, e:
+        except Exception:
             errorMsgDict = indigo.Dict()
             errorMsgDict[u'port'] = u"This needs to be a valid TCP port."
             return (False, valuesDict, errorMsgDict)
@@ -136,7 +133,7 @@ class Plugin(indigo.PluginBase):
                 errorMsgDict = indigo.Dict()
                 errorMsgDict[u'port'] = u"This needs to be a valid TCP port."
                 return (False, valuesDict, errorMsgDict)
-        except Exception, e:
+        except Exception:
             errorMsgDict = indigo.Dict()
             errorMsgDict[u'port'] = u"This needs to be a valid TCP port."
             return (False, valuesDict, errorMsgDict)
@@ -207,7 +204,7 @@ class Plugin(indigo.PluginBase):
 
         except socket.error:
             self.errorLog(u"Socket Setup Error: (%s) %s" % ( sys.exc_info()[1][0], sys.exc_info()[1][1] ))
-        except Exception, e:
+        except Exception as e:
             self.errorLog (u"Error: " + str(e))
             pass
 
@@ -243,7 +240,7 @@ class Plugin(indigo.PluginBase):
                 except socket.error:
                     self.errorLog(u"Socket Setup Error: (%s) %s" % ( sys.exc_info()[1][0], sys.exc_info()[1][1] ))
                     pass
-                except Exception,e:
+                except Exception as e:
                     self.errorLog (u"Error: " + str(e))
                     pass
 
@@ -334,7 +331,7 @@ class Plugin(indigo.PluginBase):
                 self.sock = None
             pass
             self.debugLog(u"Exited listening socket")
-        except Exception, e:
+        except Exception as e:
             self.errorLog (u"Error: " + str(e))
             pass
 
@@ -381,7 +378,7 @@ class Plugin(indigo.PluginBase):
             else:
                 r = requests.post(url=rUrl, data=rPayload, headers=rHeaders, timeout=4)
             rStatusCode = r.status_code
-        except Exception, e:
+        except Exception as e:
             lastError = str(e)
             self.errorLog(device.name + ": Request error : %s" % lastError)
             return False, r
@@ -434,12 +431,12 @@ class Plugin(indigo.PluginBase):
             try:
                 if os.system("open -a Kodi") == 0:
                     return
-            except Exception, e:    
+            except Exception as e:
                 pass
             try:
                 if os.system("open -a XBMC") == 0:
                     return
-            except Exception,e:
+            except Exception as e:
                 pass
             self.errorLog(device.name + ": Is Kodi/XBMC installed?")
         else:
@@ -481,7 +478,7 @@ class Plugin(indigo.PluginBase):
         status, r = self.sendRpcRequest  (device, "Application.GetProperties", {"properties": ["version"]} )
   
         if status:
-            json_query = unicode(r.content, 'utf-8', errors='ignore')
+            json_query = str(r.content, 'utf-8', errors='ignore')
             json_query = json.loads(json_query)
             version_installed = []
             if json_query.has_key('result') and json_query['result'].has_key('version'):
@@ -604,7 +601,7 @@ class Plugin(indigo.PluginBase):
         return valuesDict
 
     def _devTypeIdIsRelayDevice(self, typeId):
-        return true
+        return True
         #return typeId in (u"PiFaceOutput", u"PiFaceInput")
 
     def actionControlDimmerRelay(self, pluginAction, device):
